@@ -235,32 +235,25 @@ func (s *Solver) ChooseCol(k int) (*Node, bool) {
 	return m.SmallestCol(), true
 }
 
-type Solution struct {
-	items []*Node
-}
+type Solution []*Node
 
-func NewSolution() *Solution {
-	s := Solution{items: make([]*Node, 0)}
-	return &s
-}
 func (s *Solution) Set(i int, n *Node) {
-	if i < len(s.items) {
-		s.items[i] = n
+	if i < len(*s) {
+		(*s)[i] = n
 	} else {
-		s.items = append(s.items, n)
+		(*s) = append((*s), n)
 	}
 }
 func (s *Solution) Get(i int) *Node {
-	return s.items[i]
+	return (*s)[i]
 }
-
 func (s *Solution) Len() int {
-	return len(s.items)
+	return len(*s)
 }
 
 func (s *Solution) String() string {
 	o := ""
-	for _, n := range s.items {
+	for _, n := range *s {
 		if n != nil {
 			o += n.Col.Meta.Name
 			for m := n.Right; n != m; m = m.Right {
