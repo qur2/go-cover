@@ -14,7 +14,7 @@ type Meta struct {
 type Node struct {
 	Right, Up, Left, Down *Node
 	Col                   *Node
-	Meta                  *Meta
+	*Meta
 }
 
 // Initializes a node with neighbours pointing to itself.
@@ -52,7 +52,7 @@ func (c *Node) ColAppend(n *Node) {
 	// inserts the node at bottom of the col
 	c.Up.Down = n
 	c.Up = n
-	c.Meta.Size++
+	c.Size++
 }
 
 func (n *Node) String() string {
@@ -60,23 +60,23 @@ func (n *Node) String() string {
 }
 
 func (c *Node) Cover() {
-	log.Println("Cover col", c.Meta.Name)
+	log.Println("Cover col", c.Name)
 	c.Right.Left = c.Left
 	c.Left.Right = c.Right
 	for i := c.Down; i != c; i = i.Down {
 		for j := i.Right; j != i; j = j.Right {
 			j.Down.Up = j.Up
 			j.Up.Down = j.Down
-			j.Col.Meta.Size--
+			j.Col.Size--
 		}
 	}
 }
 
 func (c *Node) Uncover() {
-	log.Println("Uncover col", c.Meta.Name)
+	log.Println("Uncover col", c.Name)
 	for i := c.Up; i != c; i = i.Up {
 		for j := i.Left; j != i; j = j.Left {
-			j.Col.Meta.Size++
+			j.Col.Size++
 			j.Down.Up = j
 			j.Up.Down = j
 		}
@@ -137,9 +137,9 @@ func (m *SparseMatrix) SmallestCol() *Node {
 	// we want the underlying node rather than the matrix for comparison
 	root := m.Root()
 	for col := root.Right; col != root; col = col.Right {
-		if col.Meta.Size < min {
+		if col.Size < min {
 			r = col
-			min = col.Meta.Size
+			min = col.Size
 		}
 	}
 	return r
@@ -152,7 +152,7 @@ func (m *SparseMatrix) Root() *Node {
 func (m *SparseMatrix) Col(name string) *Node {
 	root := m.Root()
 	for col := root.Right; col != root; col = col.Right {
-		if col.Meta.Name == name {
+		if col.Name == name {
 			return col
 		}
 	}
@@ -231,7 +231,7 @@ type Guesser interface {
 // telling wether this step should backtracked or not.
 func (s *Solver) ChooseCol(k int) (*Node, bool) {
 	m := s.matrix
-	log.Println("guess is", m.SmallestCol().Meta.Name, "(", m.SmallestCol().Meta.Size, "), bt", true)
+	log.Println("guess is", m.SmallestCol().Name, "(", m.SmallestCol().Size, "), bt", true)
 	return m.SmallestCol(), true
 }
 
@@ -255,9 +255,9 @@ func (s *Solution) String() string {
 	o := ""
 	for _, n := range *s {
 		if n != nil {
-			o += n.Col.Meta.Name
+			o += n.Col.Name
 			for m := n.Right; n != m; m = m.Right {
-				o += " " + m.Col.Meta.Name
+				o += " " + m.Col.Name
 			}
 			o += "\n"
 		}
