@@ -9,7 +9,7 @@ package cover
 
 import (
 	"fmt"
-	"log"
+	// "log"
 )
 
 // Used for column nodes to remember their name and size.
@@ -70,7 +70,7 @@ func (n *Node) String() string {
 // Reduces the matrix in a non-destructive way by hiding the column
 // from the matrix headers as well as the intersecting rows.
 func (c *Node) Cover() {
-	log.Println("Cover col", c.Name)
+	// log.Println("Cover col", c.Name)
 	c.Right.Left = c.Left
 	c.Left.Right = c.Right
 	for i := c.Down; i != c; i = i.Down {
@@ -85,7 +85,7 @@ func (c *Node) Cover() {
 // Expands the matrix bz restoring the columns and its intersecting rows.
 // Beware that the order is important to properly undo a Cover() step.
 func (c *Node) Uncover() {
-	log.Println("Uncover col", c.Name)
+	// log.Println("Uncover col", c.Name)
 	for i := c.Up; i != c; i = i.Up {
 		for j := i.Left; j != i; j = j.Left {
 			j.Col.Size++
@@ -180,10 +180,10 @@ func (m *SparseMatrix) Col(name string) *Node {
 
 // Heart of the DLX algorithm.
 func (m *SparseMatrix) Search(O *Solution, k int, g Guesser) {
-	log.Println(k)
+	// log.Println(k)
 	root := m.Root()
 	if root.Right == root {
-		fmt.Println(O)
+		g.Eureka(O)
 		return
 	}
 	c, bt := g.ChooseCol(k)
@@ -215,6 +215,9 @@ func NewSolver(m [][]int, h []string) *Solver {
 	s := Solver{matrix: NewSparseMatrix(m, h)}
 	return &s
 }
+func (s *Solver) Eureka(O *Solution) {
+	fmt.Println(O)
+}
 func (s *Solver) Solve() *Solution {
 	O := new(Solution)
 	s.matrix.Search(O, 0, s)
@@ -226,13 +229,14 @@ type Guesser interface {
 	// Given a specific level, returns a node for the current step and a boolean
 	// telling wether this step should backtracked or not.
 	ChooseCol(int) (*Node, bool)
+	Eureka(*Solution)
 }
 
 // Chooses the column havng the smallest number of interesecting rows and always
 // asks for backtracking.
 func (s *Solver) ChooseCol(k int) (*Node, bool) {
 	m := s.matrix
-	log.Println("guess is", m.SmallestCol().Name, "(", m.SmallestCol().Size, "), bt", true)
+	// log.Println("guess is", m.SmallestCol().Name, "(", m.SmallestCol().Size, "), bt", true)
 	return m.SmallestCol(), true
 }
 
