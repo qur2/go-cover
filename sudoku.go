@@ -5,6 +5,8 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 // Builds a constraint matrix for a sudoku of the given dimension.
@@ -55,15 +57,14 @@ func SudokuConstraintMatrix(dim int) (matrix [][]int, headers []string) {
 
 type SudokuSolver struct {
 	*Solver
+	Dim int
 }
 
 // Since the constraint matrix for a sudoku only depends on its size, this constructor
 // encapsulate the matrix creation so that only the sudoku size is needed.
 func NewSudokuSolver(dim int) *SudokuSolver {
 	m, h := SudokuConstraintMatrix(dim)
-	log.Println(len(h), h)
-	log.Println(len(m))
-	s := SudokuSolver{&Solver{matrix: NewSparseMatrix(m, h)}}
+	s := SudokuSolver{&Solver{matrix: NewSparseMatrix(m, h)}, dim}
 	return &s
 }
 
@@ -90,6 +91,53 @@ func (s *SudokuSolver) gridToCover(sudoku [][]int) map[int][]string {
 	}
 	return init
 }
+func (s *SudokuSolver) coverToGrid(nodes []*Node) (x int, y int, digit int) {
+	for _, n := range nodes {
+		if n != nil {
+			if strings.ContainsAny(n.Col.Name, "r & c & b") {
+				digit, _ = strconv.Atoi(fmt.Sprintf("%c", n.Col.Name[0]))
+			} else {
+				xy := strings.Split(n.Col.Name, ",")
+				x, _ = strconv.Atoi(xy[0])
+				y, _ = strconv.Atoi(xy[1])
+			}
+		}
+	}
+	return
+}
+func (s *SudokuSolver) Eureka(O *Solution) {
+	grid := make([][]int, s.Dim)
+	for i := 0; i < s.Dim; i++ {
+		grid[i] = make([]int, s.Dim)
+	}
+	for _, n := range *O {
+		nodes := make([]*Node, 4)
+		nodes = append(nodes, n)
+		for m := n.Right; n != m; m = m.Right {
+			nodes = append(nodes, m)
+		}
+		x, y, digit := s.coverToGrid(nodes)
+		grid[x][y] = digit
+	}
+	sdim := int(math.Sqrt(float64(s.Dim)))
+	delim := "+" + strings.Repeat(strings.Repeat("-", sdim*2+1)+"+", sdim)
+	for i, line := range grid {
+		if i%sdim == 0 {
+			fmt.Println(delim)
+		}
+		for j, cell := range line {
+			if j%sdim == 0 {
+				if j > 0 {
+					fmt.Print(" ")
+				}
+				fmt.Print("|")
+			}
+			fmt.Print(" ", cell)
+		}
+		fmt.Print(" |\n")
+	}
+	fmt.Println(delim)
+}
 func (s *SudokuSolver) Solve(sudoku [][]int) *Solution {
 	partial := s.gridToCover(sudoku)
 	// Iterate through the digits from biggest to smallest.
@@ -98,7 +146,7 @@ func (s *SudokuSolver) Solve(sudoku [][]int) *Solution {
 		keys = append(keys, key)
 	}
 	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
-	log.Println("Initial config is", partial)
+	// log.Println("Initial config is", partial)
 	O := new(Solution)
 	k := 0
 	m := s.matrix
@@ -118,7 +166,7 @@ func (s *SudokuSolver) Solve(sudoku [][]int) *Solution {
 			k++
 		}
 	}
-	fmt.Printf("Initial solution is\n%v", O)
+	// fmt.Printf("Initial solution is\n%v", O)
 	s.matrix.Search(O, k, s)
 	return O
 }
