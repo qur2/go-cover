@@ -186,7 +186,7 @@ func (m *SparseMatrix) Search(O *Solution, k int, g Guesser) {
 		g.Eureka(O)
 		return
 	}
-	c, bt := g.ChooseCol(k)
+	c := g.ChooseCol(k)
 	c.Cover()
 	for r := c.Down; r != c; r = r.Down {
 		O.Set(k, r)
@@ -194,7 +194,7 @@ func (m *SparseMatrix) Search(O *Solution, k int, g Guesser) {
 			j.Col.Cover()
 		}
 		m.Search(O, k+1, g)
-		if !bt {
+		if g.Terminate() {
 			return
 		}
 		r = O.Get(k)
@@ -206,17 +206,24 @@ func (m *SparseMatrix) Search(O *Solution, k int, g Guesser) {
 	c.Uncover()
 }
 
+// A guesser is an object able to choose a specific column for the DLX algorithm.
+type Guesser interface {
+	// Given a specific level, returns a node for the current step and a boolean
+	// telling wether this step should backtracked or not.
+	ChooseCol(int) *Node
+	Eureka(*Solution)
+	Terminate() bool
+}
+
 // Embeds a sparse matrix to provide clean interface.
 type Solver struct {
-	matrix *SparseMatrix
+	matrix      *SparseMatrix
+	hasSolution bool
 }
 
 func NewSolver(m [][]int, h []string) *Solver {
 	s := Solver{matrix: NewSparseMatrix(m, h)}
 	return &s
-}
-func (s *Solver) Eureka(O *Solution) {
-	fmt.Println(O)
 }
 func (s *Solver) Solve() *Solution {
 	O := new(Solution)
@@ -224,20 +231,19 @@ func (s *Solver) Solve() *Solution {
 	return O
 }
 
-// A guesser is an object able to choose a specific column for the DLX algorithm.
-type Guesser interface {
-	// Given a specific level, returns a node for the current step and a boolean
-	// telling wether this step should backtracked or not.
-	ChooseCol(int) (*Node, bool)
-	Eureka(*Solution)
-}
-
 // Chooses the column havng the smallest number of interesecting rows and always
 // asks for backtracking.
-func (s *Solver) ChooseCol(k int) (*Node, bool) {
+func (s *Solver) ChooseCol(k int) *Node {
 	m := s.matrix
 	// log.Println("guess is", m.SmallestCol().Name, "(", m.SmallestCol().Size, "), bt", true)
-	return m.SmallestCol(), true
+	return m.SmallestCol()
+}
+func (s *Solver) Eureka(O *Solution) {
+	s.hasSolution = true
+	fmt.Println(O)
+}
+func (s *Solver) Terminate() bool {
+	return s.hasSolution
 }
 
 // Aliases a Node pointer array to provide a nice interface.
