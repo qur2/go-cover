@@ -12,6 +12,8 @@ import (
 	// "log"
 )
 
+//log.SetOutput(ioutil.Discard) // turns off logging
+
 // Used for column nodes to remember their name and size.
 type Meta struct {
 	Size uint
@@ -217,12 +219,12 @@ type Guesser interface {
 
 // Embeds a sparse matrix to provide clean interface.
 type Solver struct {
-	matrix      *SparseMatrix
-	hasSolution bool
+	matrix    *SparseMatrix
+	Solutions []*Solution
 }
 
 func NewSolver(m [][]int, h []string) *Solver {
-	s := Solver{matrix: NewSparseMatrix(m, h)}
+	s := Solver{matrix: NewSparseMatrix(m, h), Solutions: make([]*Solution, 0, 1)}
 	return &s
 }
 func (s *Solver) Solve() *Solution {
@@ -239,11 +241,10 @@ func (s *Solver) ChooseCol(k int) *Node {
 	return m.SmallestCol()
 }
 func (s *Solver) Eureka(O *Solution) {
-	s.hasSolution = true
-	fmt.Println(O)
+	s.Solutions = append(s.Solutions, O)
 }
 func (s *Solver) Terminate() bool {
-	return s.hasSolution
+	return len(s.Solutions) > 0
 }
 
 // Aliases a Node pointer array to provide a nice interface.
