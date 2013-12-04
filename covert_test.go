@@ -1,6 +1,9 @@
 package cover
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestNewNode(t *testing.T) {
 	n := NewNode()
@@ -85,5 +88,25 @@ func TestColAppend(t *testing.T) {
 	}
 	if q.Up != p {
 		t.Errorf("Node.Up points to %p (wants %p)", q.Up, p)
+	}
+}
+
+func TestSolve(t *testing.T) {
+	knuth := make([][]int, 6)
+	knuth[0] = []int{0, 0, 1, 0, 1, 1, 0}
+	knuth[1] = []int{1, 0, 0, 1, 0, 0, 1}
+	knuth[2] = []int{0, 1, 1, 0, 0, 1, 0}
+	knuth[3] = []int{1, 0, 0, 1, 0, 0, 0}
+	knuth[4] = []int{0, 1, 0, 0, 0, 0, 1}
+	knuth[5] = []int{0, 0, 0, 1, 1, 0, 1}
+	solver := NewSolver(knuth, []string{"A", "B", "C", "D", "E", "F", "G"})
+	solver.Solve()
+	if len(solver.Solutions) != 1 {
+		t.Errorf("Knuth example cover problem has exacly 1 solution, %v found", len(solver.Solutions))
+	}
+	solution := fmt.Sprint(solver.Solutions[0])
+	expected := "A D\nE F C\nB G\n"
+	if solution != expected {
+		t.Errorf("Wrong solution to Knuth example cover problem: %v", solution)
 	}
 }
